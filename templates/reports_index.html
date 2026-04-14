@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Reports – Vulnerability Tracker{% endblock %}
+{% block content %}
+<h1>Reports</h1>
+<p>Aggregation queries across the vulnerability and patch tracking data.</p>
+
+<div class="link-grid">
+    <a href="{{ url_for('report_findings_severity') }}" class="link-card">
+        <strong>Findings by Severity</strong>
+        <span>Open findings grouped by vulnerability severity level</span>
+    </a>
+    <a href="{{ url_for('report_patch_status') }}" class="link-card">
+        <strong>Patch Actions by Status</strong>
+        <span>Breakdown of all patch actions by current status</span>
+    </a>
+    <a href="{{ url_for('report_top_assets') }}" class="link-card">
+        <strong>Top Exposed Assets</strong>
+        <span>Assets ranked by number of open findings</span>
+    </a>
+    <a href="{{ url_for('report_compliance_org') }}" class="link-card">
+        <strong>Compliance by Organization</strong>
+        <span>Patch completion rate per organization</span>
+    </a>
+    <a href="{{ url_for('report_most_affected_sw') }}" class="link-card">
+        <strong>Most Affected Software</strong>
+        <span>Software products ranked by known vulnerabilities and findings</span>
+    </a>
+</div>
+{% endblock %}

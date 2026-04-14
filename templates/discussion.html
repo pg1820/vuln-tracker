@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Discussion – Vulnerability Tracker{% endblock %}
+{% block content %}
+<h1>Discussion</h1>
+
+<section class="discussion-section">
+<h2>Normalization</h2>
+
+<p>All ten tables in this schema satisfy Third Normal Form (3NF). Each table has a single-column surrogate primary key (SERIAL), and every non-key column depends on the whole key and nothing but the key.</p>
+
+<p><strong>1NF:</strong> Every column holds atomic values. There are no repeating groups or multi-valued fields. For example, software version, vendor, and product name are separate columns in software_products rather than a concatenated string. Severity and status use constrained VARCHAR values rather than encoded integers, keeping each cell single-valued and self-describing.</p>
+
+<p><strong>2NF:</strong> Because every table uses a single-column surrogate primary key, partial dependencies are structurally impossible. The two junction tables (asset_software_installs and software_vulnerabilities) each have their own surrogate key plus a UNIQUE constraint on the composite foreign key pair, which eliminates the partial-dependency risk that composite natural keys would introduce.</p>
+
+<p><strong>3NF:</strong> No transitive dependencies exist. Organization data lives in organizations, not repeated on assets or users. Vulnerability reference data (CVE ID, severity, CVSS score) lives in vulnerabilities, not duplicated in scan_findings. The scan_findings table references a software_vulnerabilities mapping rather than storing software_id and vuln_id directly, because the relationship between a specific software product and a specific vulnerability is an independent fact that multiple findings may reference.</p>
+
+<p>The one design choice worth noting: patch_status_history deliberately denormalizes old_status and new_status as plain VARCHAR rather than referencing a status lookup table. This is intentional. The history table is an append-only audit log, and storing the literal status strings ensures the historical record remains readable even if the set of allowed statuses changes in the future. This is a standard pattern for audit/event tables.</p>
+</section>
+
+<section class="discussion-section">
+<h2>Integrity Enforcement</h2>
+
+<p>The schema uses all four categories of integrity constraints supported by PostgreSQL:</p>
+
+<p><strong>Entity Integrity:</strong> Every table has a SERIAL PRIMARY KEY that is automatically non-null and unique. This guarantees that every row is uniquely identifiable. Examples: org_id in organizations, asset_id in assets, finding_id in scan_findings.</p>
+
+<p><strong>Referential Integrity:</strong> Foreign keys enforce all parent-child relationships. The schema uses two ON DELETE strategies depending on semantics:</p>
+<ul>
+    <li>CASCADE: When a parent is deleted, child records are deleted. Used where the child has no meaning without the parent (e.g., deleting an organization cascades to its assets and users; deleting an asset cascades to its software installs and scan findings).</li>
+    <li>SET NULL: Used for optional references where the child should survive. For example, if a user who was assigned to a patch action is deleted, the assigned_to_fk column becomes NULL rather than deleting the patch action record.</li>
+</ul>
+
+<p><strong>Domain Integrity:</strong> CHECK constraints enforce valid value ranges at the database level:</p>
+<ul>
+    <li>assets.criticality must be between 1 and 5</li>
+    <li>vulnerabilities.cvss_score must be between 0.0 and 10.0</li>
+    <li>users.role must be one of: admin, analyst, engineer, viewer</li>
+    <li>assets.environment must be one of: Production, Staging, Development, Corporate, Lab</li>
+    <li>scan_findings.status and patch_actions.status are constrained to their respective valid state sets</li>
+</ul>
+
+<p><strong>User-Defined / Application Integrity:</strong> The trg_patch_status_audit trigger enforces the business rule that every status change on a patch action must be recorded in the audit history. The sp_record_scan_finding procedure enforces deduplication logic: the same asset cannot have two open findings for the same software-vulnerability pair. These rules go beyond what declarative constraints can express.</p>
+
+<p>UNIQUE constraints prevent logical duplicates: hostname in assets, username in users, org_name in organizations, the composite (product_name, vendor, version) in software_products, and the composite foreign key pairs in both junction tables.</p>
+</section>
+
+<section class="discussion-section">
+<h2>Isolation Level</h2>
+
+<p>The system uses PostgreSQL's default isolation level of <strong>READ COMMITTED</strong> for normal CRUD operations, with targeted escalation to <strong>SERIALIZABLE</strong> for critical transactions.</p>
+
+<p><strong>Why READ COMMITTED is the default:</strong> Most operations in this system are simple single-row reads and writes (viewing an asset, updating a user's email, adding a new vulnerability). READ COMMITTED prevents dirty reads, which is the main concern for these operations. It also avoids the performance overhead and retry complexity of stricter isolation levels. In a vulnerability tracking context, reading slightly stale data for a list view is acceptable; reading uncommitted data is not.</p>
+
+<p><strong>Where stricter isolation is needed:</strong> The sp_initiate_patch_action procedure performs a multi-step transaction: it inserts a patch action, inserts the initial history record, and updates the scan finding status. If two users simultaneously try to create a patch action for the same finding, READ COMMITTED could allow both transactions to see the finding as 'Open' and both proceed. For this procedure, SERIALIZABLE isolation would be appropriate to ensure that only one patch action is created per finding, and the finding status is updated exactly once.</p>
+
+<p><strong>Similarly for sp_record_scan_finding:</strong> The duplicate-check-then-insert pattern is a classic case where READ COMMITTED can produce anomalies under concurrent execution. Two scanners running simultaneously could both check for an existing open finding, both find none, and both insert — creating a duplicate. SERIALIZABLE isolation eliminates this race condition by detecting the conflict and aborting one transaction.</p>
+
+<p><strong>Trade-off acknowledged:</strong> SERIALIZABLE isolation requires the application to handle serialization failures by retrying the transaction. This is a reasonable cost for operations that must be exactly-once (creating patch actions, recording findings), while the vast majority of operations (listing data, editing records, running reports) work correctly and efficiently under READ COMMITTED.</p>
+</section>
+{% endblock %}

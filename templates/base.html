@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Vulnerability Tracker{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <nav class="sidebar">
+        <div class="sidebar-header">
+            <h2>Vuln Tracker</h2>
+            <p class="subtitle">Patch Tracking System</p>
+        </div>
+        <ul>
+            <li><a href="{{ url_for('home') }}" class="{% if request.path == '/' %}active{% endif %}">Dashboard</a></li>
+            <li class="nav-section">Tables</li>
+            {% for tname, tlabel in tables_nav if tables_nav %}
+            <li><a href="{{ url_for('table_list', table_name=tname) }}" class="{% if request.path.startswith('/table/' + tname) %}active{% endif %}">{{ tlabel }}</a></li>
+            {% endfor %}
+            <li class="nav-section">Analysis</li>
+            <li><a href="{{ url_for('reports_index') }}" class="{% if request.path.startswith('/reports') %}active{% endif %}">Reports</a></li>
+            <li><a href="{{ url_for('sql_objects') }}" class="{% if request.path == '/sql-objects' %}active{% endif %}">SQL Objects</a></li>
+            <li><a href="{{ url_for('discussion') }}" class="{% if request.path == '/discussion' %}active{% endif %}">Discussion</a></li>
+        </ul>
+    </nav>
+    <main class="content">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for cat, msg in messages %}
+        <div class="flash {{ cat }}">{{ msg }}</div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+        {% block content %}{% endblock %}
+    </main>
+</body>
+</html>

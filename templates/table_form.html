@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}{{ mode }} {{ cfg.label }} – Vulnerability Tracker{% endblock %}
+{% block content %}
+<h1>{{ mode }} – {{ cfg.label }}</h1>
+<a href="{{ url_for('table_list', table_name=table_name) }}" class="btn btn-back">&larr; Back to List</a>
+
+<form method="POST" class="record-form">
+    {% for field in cfg.editable %}
+    <div class="form-group">
+        <label for="{{ field }}">{{ field.replace('_fk', '').replace('_', ' ').title() }}</label>
+
+        {% if field in fk_opts %}
+            {# Foreign key dropdown #}
+            <select name="{{ field }}" id="{{ field }}">
+                <option value="">-- Select --</option>
+                {% for val, label in fk_opts[field] %}
+                <option value="{{ val }}" {% if record and record[field]|string == val|string %}selected{% endif %}>
+                    {{ val }} – {{ label }}
+                </option>
+                {% endfor %}
+            </select>
+
+        {% elif cfg.get('field_options', {}).get(field) %}
+            {# Enum/check constraint dropdown #}
+            <select name="{{ field }}" id="{{ field }}">
+                {% for opt in cfg.field_options[field] %}
+                <option value="{{ opt }}" {% if record and record[field] == opt %}selected{% endif %}>{{ opt }}</option>
+                {% endfor %}
+            </select>
+
+        {% elif 'date' in field and 'time' not in field %}
+            <input type="date" name="{{ field }}" id="{{ field }}"
+                   value="{{ record[field] if record and record[field] else '' }}">
+
+        {% elif 'description' in field or 'note' in field %}
+            <textarea name="{{ field }}" id="{{ field }}" rows="3">{{ record[field] if record and record[field] else '' }}</textarea>
+
+        {% elif 'criticality' in field or 'cvss' in field %}
+            <input type="number" name="{{ field }}" id="{{ field }}" step="{% if 'cvss' in field %}0.1{% else %}1{% endif %}"
+                   min="{% if 'cvss' in field %}0{% else %}1{% endif %}" max="{% if 'cvss' in field %}10{% else %}5{% endif %}"
+                   value="{{ record[field] if record and record[field] else '' }}">
+
+        {% elif 'completed_at' in field or 'timestamp' in field %}
+            <input type="datetime-local" name="{{ field }}" id="{{ field }}"
+                   value="{{ record[field].strftime('%Y-%m-%dT%H:%M') if record and record[field] else '' }}">
+
+        {% else %}
+            <input type="text" name="{{ field }}" id="{{ field }}"
+                   value="{{ record[field] if record and record[field] else '' }}">
+        {% endif %}
+    </div>
+    {% endfor %}
+
+    <div class="form-actions">
+        <button type="submit" class="btn btn-primary">{{ mode }}</button>
+        <a href="{{ url_for('table_list', table_name=table_name) }}" class="btn">Cancel</a>
+    </div>
+</form>
+{% endblock %}

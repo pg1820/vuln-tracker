@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+{% block title %}SQL Objects – Vulnerability Tracker{% endblock %}
+{% block content %}
+<h1>SQL Objects</h1>
+<p>This system uses PostgreSQL views, stored procedures, functions, and triggers to enforce business logic at the database level.</p>
+
+<section class="discussion-section">
+<h2>Views</h2>
+
+<h3>vw_asset_exposure_summary</h3>
+<p>Joins assets, scan_findings, software_vulnerabilities, and vulnerabilities to produce a per-asset summary of open exposure. Columns include hostname, environment, criticality, and counts of open findings broken down by severity (Critical, High, Medium, Low). This view supports the "Top Exposed Assets" report and any dashboard that needs to rank assets by risk.</p>
+<pre><code>CREATE OR REPLACE VIEW vw_asset_exposure_summary AS
+SELECT a.asset_id, a.hostname, a.asset_type, a.environment, a.criticality,
+       o.org_name,
+       COUNT(sf.finding_id) AS total_open_findings,
+       COUNT(CASE WHEN v.severity = 'Critical' THEN 1 END) AS critical_count,
+       COUNT(CASE WHEN v.severity = 'High' THEN 1 END) AS high_count,
+       COUNT(CASE WHEN v.severity = 'Medium' THEN 1 END) AS medium_count,
+       COUNT(CASE WHEN v.severity = 'Low' THEN 1 END) AS low_count
+FROM assets a
+JOIN organizations o ON a.org_id_fk = o.org_id
+LEFT JOIN scan_findings sf ON a.asset_id = sf.asset_id_fk AND sf.status = 'Open'
+LEFT JOIN software_vulnerabilities sv ON sf.sw_vuln_id_fk = sv.sw_vuln_id
+LEFT JOIN vulnerabilities v ON sv.vuln_id_fk = v.vuln_id
+GROUP BY a.asset_id, a.hostname, a.asset_type, a.environment, a.criticality, o.org_name;</code></pre>
+
+<h3>vw_patch_compliance_status</h3>
+<p>Joins patch_actions with scan_findings, software_vulnerabilities, vulnerabilities, assets, and users to show the full remediation context for each action. Includes a computed compliance_state column: 'Compliant' if completed, 'Overdue' if past due date and not completed, or 'In Progress' otherwise. This view drives the compliance reporting.</p>
+<pre><code>CREATE OR REPLACE VIEW vw_patch_compliance_status AS
+SELECT pa.action_id, a.hostname, v.cve_id, v.title AS vuln_title,
+       v.severity, pa.action_type, pa.status AS action_status,
+       pa.due_date, pa.completed_at, u.full_name AS assigned_to,
+       sf.status AS finding_status,
+       CASE
+           WHEN pa.status = 'Completed' THEN 'Compliant'
+           WHEN pa.due_date < CURRENT_DATE AND pa.status NOT IN ('Completed','Cancelled') THEN 'Overdue'
+           ELSE 'In Progress'
+       END AS compliance_state
+FROM patch_actions pa
+JOIN scan_findings sf ON pa.finding_id_fk = sf.finding_id
+JOIN software_vulnerabilities sv ON sf.sw_vuln_id_fk = sv.sw_vuln_id
+JOIN vulnerabilities v ON sv.vuln_id_fk = v.vuln_id
+JOIN assets a ON sf.asset_id_fk = a.asset_id
+LEFT JOIN users u ON pa.assigned_to_fk = u.user_id;</code></pre>
+</section>
+
+<section class="discussion-section">
+<h2>Stored Procedures</h2>
+
+<h3>sp_record_scan_finding</h3>
+<p>Accepts an asset ID, software-vulnerability mapping ID, and optional notes. Before inserting, it checks whether an identical open finding already exists for that asset and software-vulnerability pair. If a duplicate is found, the procedure skips the insert and raises a notice. This prevents double-entry during automated scanning.</p>
+<pre><code>CREATE OR REPLACE PROCEDURE sp_record_scan_finding(
+    p_asset_id INTEGER, p_sw_vuln_id INTEGER, p_notes TEXT DEFAULT NULL
+) LANGUAGE plpgsql AS $$
+DECLARE existing INTEGER;
+BEGIN
+    SELECT finding_id INTO existing FROM scan_findings
+    WHERE asset_id_fk = p_asset_id AND sw_vuln_id_fk = p_sw_vuln_id AND status = 'Open'
+    LIMIT 1;
+    IF existing IS NOT NULL THEN
+        RAISE NOTICE 'Finding already exists (finding_id=%). Skipping.', existing;
+        RETURN;
+    END IF;
+    INSERT INTO scan_findings (asset_id_fk, sw_vuln_id_fk, status, notes)
+    VALUES (p_asset_id, p_sw_vuln_id, 'Open', p_notes);
+END; $$;</code></pre>
+
+<h3>sp_initiate_patch_action</h3>
+<p>Creates a new patch action for a given finding and immediately inserts the initial status history entry, all within a single transaction. It also updates the parent scan finding status from 'Open' to 'In Progress'. This ensures that creating a patch action and recording its initial audit trail are atomic.</p>
+<pre><code>CREATE OR REPLACE PROCEDURE sp_initiate_patch_action(
+    p_finding_id INTEGER, p_assigned_to INTEGER,
+    p_action_type VARCHAR(50) DEFAULT 'Patch', p_due_date DATE DEFAULT NULL
+) LANGUAGE plpgsql AS $$
+DECLARE new_action_id INTEGER;
+BEGIN
+    INSERT INTO patch_actions (finding_id_fk, assigned_to_fk, action_type, status, due_date)
+    VALUES (p_finding_id, p_assigned_to, p_action_type, 'Pending', p_due_date)
+    RETURNING action_id INTO new_action_id;
+    INSERT INTO patch_status_history (action_id_fk, old_status, new_status, changed_by_fk, note)
+    VALUES (new_action_id, NULL, 'Pending', p_assigned_to, 'Patch action initiated');
+    UPDATE scan_findings SET status = 'In Progress'
+    WHERE finding_id = p_finding_id AND status = 'Open';
+END; $$;</code></pre>
+</section>
+
+<section class="discussion-section">
+<h2>Functions</h2>
+
+<h3>fn_asset_risk_score(asset_id)</h3>
+<p>Calculates a numeric risk score for a given asset. It sums severity weights (Critical=10, High=6, Medium=3, Low=1) across all open findings, then multiplies by the asset's criticality rating (1–5). A production database server with two Critical and one High open finding would score (10+10+6) × 5 = 130. This enables risk-based prioritization.</p>
+<pre><code>CREATE OR REPLACE FUNCTION fn_asset_risk_score(p_asset_id INTEGER)
+RETURNS NUMERIC AS $$
+DECLARE risk NUMERIC := 0; asset_crit INTEGER;
+BEGIN
+    SELECT criticality INTO asset_crit FROM assets WHERE asset_id = p_asset_id;
+    IF asset_crit IS NULL THEN RETURN 0; END IF;
+    SELECT COALESCE(SUM(
+        CASE v.severity WHEN 'Critical' THEN 10 WHEN 'High' THEN 6
+             WHEN 'Medium' THEN 3 WHEN 'Low' THEN 1 ELSE 0 END
+    ), 0) INTO risk
+    FROM scan_findings sf
+    JOIN software_vulnerabilities sv ON sf.sw_vuln_id_fk = sv.sw_vuln_id
+    JOIN vulnerabilities v ON sv.vuln_id_fk = v.vuln_id
+    WHERE sf.asset_id_fk = p_asset_id AND sf.status = 'Open';
+    RETURN risk * asset_crit;
+END; $$ LANGUAGE plpgsql;</code></pre>
+
+<h3>fn_patch_compliance_rate(org_id)</h3>
+<p>Returns the percentage of completed patch actions for an organization. It joins patch_actions through scan_findings and assets to filter by org_id, then divides completed actions by total actions. Returns 100.0 if there are no actions (fully compliant by default). Used in the compliance-by-organization report.</p>
+<pre><code>CREATE OR REPLACE FUNCTION fn_patch_compliance_rate(p_org_id INTEGER)
+RETURNS NUMERIC AS $$
+DECLARE total_actions INTEGER; completed_actions INTEGER;
+BEGIN
+    SELECT COUNT(*), COUNT(CASE WHEN pa.status = 'Completed' THEN 1 END)
+    INTO total_actions, completed_actions
+    FROM patch_actions pa
+    JOIN scan_findings sf ON pa.finding_id_fk = sf.finding_id
+    JOIN assets a ON sf.asset_id_fk = a.asset_id
+    WHERE a.org_id_fk = p_org_id;
+    IF total_actions = 0 THEN RETURN 100.0; END IF;
+    RETURN ROUND((completed_actions::NUMERIC / total_actions) * 100, 1);
+END; $$ LANGUAGE plpgsql;</code></pre>
+</section>
+
+<section class="discussion-section">
+<h2>Triggers</h2>
+
+<h3>trg_patch_status_audit</h3>
+<p>Fires AFTER UPDATE on the patch_actions table. When the status column changes, it automatically inserts a row into patch_status_history with the old status, new status, the assigned user, and a timestamp. This creates an audit trail without requiring the application code to explicitly manage history inserts on every status change.</p>
+<pre><code>CREATE TRIGGER trg_patch_status_audit
+AFTER UPDATE ON patch_actions
+FOR EACH ROW EXECUTE FUNCTION trg_fn_patch_status_audit();
+
+-- Trigger function:
+CREATE OR REPLACE FUNCTION trg_fn_patch_status_audit() RETURNS TRIGGER AS $$
+BEGIN
+    IF OLD.status IS DISTINCT FROM NEW.status THEN
+        INSERT INTO patch_status_history (action_id_fk, old_status, new_status, changed_by_fk, note)
+        VALUES (NEW.action_id, OLD.status, NEW.status, NEW.assigned_to_fk, 'Status changed via update');
+    END IF;
+    RETURN NEW;
+END; $$ LANGUAGE plpgsql;</code></pre>
+
+<h3>trg_set_finding_timestamp</h3>
+<p>Fires BEFORE INSERT on scan_findings. If the discovered_at timestamp is null (not provided), the trigger sets it to NOW(). This ensures every finding has a discovery timestamp even if the inserting code does not explicitly supply one.</p>
+<pre><code>CREATE TRIGGER trg_set_finding_timestamp
+BEFORE INSERT ON scan_findings
+FOR EACH ROW EXECUTE FUNCTION trg_fn_set_finding_timestamp();
+
+-- Trigger function:
+CREATE OR REPLACE FUNCTION trg_fn_set_finding_timestamp() RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.discovered_at IS NULL THEN
+        NEW.discovered_at := NOW();
+    END IF;
+    RETURN NEW;
+END; $$ LANGUAGE plpgsql;</code></pre>
+</section>
+{% endblock %}

@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}{{ cfg.label }} – Vulnerability Tracker{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h1>{{ cfg.label }}</h1>
+    <a href="{{ url_for('table_create', table_name=table_name) }}" class="btn btn-primary">+ New Record</a>
+</div>
+
+{% if rows %}
+<div class="table-wrapper">
+<table>
+    <thead>
+        <tr>
+            {% for d in cfg.display %}
+            <th>{{ d }}</th>
+            {% endfor %}
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in rows %}
+        <tr>
+            {% for col in cfg.columns %}
+            <td>{{ row[col] if row[col] is not none else '–' }}</td>
+            {% endfor %}
+            <td class="actions-cell">
+                <a href="{{ url_for('table_edit', table_name=table_name, pk_val=row[cfg.pk]) }}" class="btn btn-small">Edit</a>
+                <form method="POST" action="{{ url_for('table_delete', table_name=table_name, pk_val=row[cfg.pk]) }}" class="inline-form"
+                      onsubmit="return confirm('Delete this record?');">
+                    <button type="submit" class="btn btn-small btn-danger">Delete</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
+{% else %}
+<p class="muted">No records found. <a href="{{ url_for('table_create', table_name=table_name) }}">Create one</a>.</p>
+{% endif %}
+
+<p class="record-count">{{ rows|length }} record{{ 's' if rows|length != 1 else '' }}</p>
+{% endblock %}

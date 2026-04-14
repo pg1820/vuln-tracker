@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% set tables_nav = [
+    ("organizations", "Organizations"),
+    ("users", "Users"),
+    ("assets", "Assets"),
+    ("software_products", "Software Products"),
+    ("asset_software_installs", "Software Installs"),
+    ("vulnerabilities", "Vulnerabilities"),
+    ("software_vulnerabilities", "Software Vulns"),
+    ("scan_findings", "Scan Findings"),
+    ("patch_actions", "Patch Actions"),
+    ("patch_status_history", "Status History"),
+] %}
+{% block title %}Dashboard – Vulnerability Tracker{% endblock %}
+{% block content %}
+<h1>Dashboard</h1>
+<p>Vulnerability and Patch Tracking System – Pavlos Giannakis</p>
+
+{% if stats %}
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-number">{{ stats.orgs }}</div>
+        <div class="stat-label">Organizations</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">{{ stats.users }}</div>
+        <div class="stat-label">Users</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">{{ stats.assets }}</div>
+        <div class="stat-label">Assets</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">{{ stats.software }}</div>
+        <div class="stat-label">Software Products</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">{{ stats.vulns }}</div>
+        <div class="stat-label">Vulnerabilities</div>
+    </div>
+    <div class="stat-card accent">
+        <div class="stat-number">{{ stats.findings }}</div>
+        <div class="stat-label">Open Findings</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">{{ stats.actions }}</div>
+        <div class="stat-label">Patch Actions</div>
+    </div>
+</div>
+{% else %}
+<p class="muted">Database not connected or not initialized. Set DATABASE_URL and run schema.sql.</p>
+{% endif %}
+
+<h2>Quick Navigation</h2>
+<div class="link-grid">
+    <a href="{{ url_for('reports_index') }}" class="link-card">Reports</a>
+    <a href="{{ url_for('sql_objects') }}" class="link-card">SQL Objects</a>
+    <a href="{{ url_for('discussion') }}" class="link-card">Discussion</a>
+</div>
+{% endblock %}

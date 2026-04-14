@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} – Reports{% endblock %}
+{% block content %}
+<a href="{{ url_for('reports_index') }}" class="btn btn-back">&larr; All Reports</a>
+<h1>{{ title }}</h1>
+
+{% if rows %}
+<div class="table-wrapper">
+<table>
+    <thead>
+        <tr>
+            {% for h in headers %}
+            <th>{{ h }}</th>
+            {% endfor %}
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in rows %}
+        <tr>
+            {% for cell in row %}
+            <td>{{ cell if cell is not none else '–' }}</td>
+            {% endfor %}
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
+{% else %}
+<p class="muted">No data available for this report.</p>
+{% endif %}
+{% endblock %}
