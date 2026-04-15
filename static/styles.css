@@ -91,9 +91,13 @@ p { line-height: 1.6; margin-bottom: 0.8rem; }
     text-align: center;
     box-shadow: 0 1px 3px rgba(0,0,0,0.08);
 }
-.stat-card.accent { border-left: 4px solid #e74c3c; }
+.stat-card.accent  { border-left: 4px solid #e74c3c; }
+.stat-card.danger  { border-left: 4px solid #d63031; }
+.stat-card.warning { border-left: 4px solid #e17055; }
 .stat-number { font-size: 2rem; font-weight: 700; color: #0984e3; }
-.stat-card.accent .stat-number { color: #e74c3c; }
+.stat-card.accent  .stat-number { color: #e74c3c; }
+.stat-card.danger  .stat-number { color: #d63031; }
+.stat-card.warning .stat-number { color: #e17055; }
 .stat-label { font-size: 0.8rem; color: #636e72; margin-top: 0.3rem; }
 
 /* ─── Link Grid ─── */

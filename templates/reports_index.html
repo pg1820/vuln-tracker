@@ -1,29 +1,41 @@
 {% extends "base.html" %}
 {% block title %}Reports – Vulnerability Tracker{% endblock %}
 {% block content %}
-<h1>Reports</h1>
-<p>Aggregation queries across the vulnerability and patch tracking data.</p>
+<h1>Reports &amp; Analytics</h1>
+<p>Aggregation queries across vulnerability data, patch compliance, SLA enforcement, and risk exposure.</p>
 
 <div class="link-grid">
     <a href="{{ url_for('report_findings_severity') }}" class="link-card">
         <strong>Findings by Severity</strong>
-        <span>Open findings grouped by vulnerability severity level</span>
+        <span>Active findings grouped by severity with avg CVSS, EPSS, and exploit counts</span>
     </a>
     <a href="{{ url_for('report_patch_status') }}" class="link-card">
-        <strong>Patch Actions by Status</strong>
-        <span>Breakdown of all patch actions by current status</span>
+        <strong>Patch Actions by Status &amp; Priority</strong>
+        <span>Patch action breakdown across status and priority levels with overdue counts</span>
     </a>
     <a href="{{ url_for('report_top_assets') }}" class="link-card">
         <strong>Top Exposed Assets</strong>
-        <span>Assets ranked by number of open findings</span>
+        <span>Assets ranked by open findings, max risk score, exploitable vulns, and SLA breaches</span>
     </a>
     <a href="{{ url_for('report_compliance_org') }}" class="link-card">
         <strong>Compliance by Organization</strong>
-        <span>Patch completion rate per organization</span>
+        <span>Patch completion rate per org with regulatory scope and SLA breach counts</span>
     </a>
     <a href="{{ url_for('report_most_affected_sw') }}" class="link-card">
-        <strong>Most Affected Software</strong>
-        <span>Software products ranked by known vulnerabilities and findings</span>
+        <strong>Most Vulnerable Software</strong>
+        <span>Software products ranked by CVE count with max CVSS/EPSS and CPE URI</span>
+    </a>
+    <a href="{{ url_for('report_exploit_risk') }}" class="link-card">
+        <strong>Exploit Risk Dashboard</strong>
+        <span>View: vw_exploit_risk_dashboard — active findings sorted by EPSS exploit probability</span>
+    </a>
+    <a href="{{ url_for('report_org_risk') }}" class="link-card">
+        <strong>Organization Risk Posture</strong>
+        <span>View: vw_organization_risk_posture — aggregated risk scores and compliance per org</span>
+    </a>
+    <a href="{{ url_for('report_sla_breach') }}" class="link-card">
+        <strong>SLA Breach Analysis</strong>
+        <span>Overdue findings grouped by org and severity with days-past-due statistics</span>
     </a>
 </div>
 {% endblock %}

@@ -1,20 +1,8 @@
 {% extends "base.html" %}
-{% set tables_nav = [
-    ("organizations", "Organizations"),
-    ("users", "Users"),
-    ("assets", "Assets"),
-    ("software_products", "Software Products"),
-    ("asset_software_installs", "Software Installs"),
-    ("vulnerabilities", "Vulnerabilities"),
-    ("software_vulnerabilities", "Software Vulns"),
-    ("scan_findings", "Scan Findings"),
-    ("patch_actions", "Patch Actions"),
-    ("patch_status_history", "Status History"),
-] %}
 {% block title %}Dashboard – Vulnerability Tracker{% endblock %}
 {% block content %}
 <h1>Dashboard</h1>
-<p>Vulnerability and Patch Tracking System – Pavlos Giannakis</p>
+<p>Vulnerability and Patch Tracking System &mdash; Pavlos Giannakis &middot; NYU Principles of Database Systems</p>
 
 {% if stats %}
 <div class="stats-grid">
@@ -28,7 +16,11 @@
     </div>
     <div class="stat-card">
         <div class="stat-number">{{ stats.assets }}</div>
-        <div class="stat-label">Assets</div>
+        <div class="stat-label">Assets Tracked</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">{{ stats.asset_groups }}</div>
+        <div class="stat-label">Asset Groups</div>
     </div>
     <div class="stat-card">
         <div class="stat-number">{{ stats.software }}</div>
@@ -36,15 +28,31 @@
     </div>
     <div class="stat-card">
         <div class="stat-number">{{ stats.vulns }}</div>
-        <div class="stat-label">Vulnerabilities</div>
+        <div class="stat-label">Known CVEs</div>
     </div>
     <div class="stat-card accent">
         <div class="stat-number">{{ stats.findings }}</div>
         <div class="stat-label">Open Findings</div>
     </div>
+    <div class="stat-card danger">
+        <div class="stat-number">{{ stats.critical_findings }}</div>
+        <div class="stat-label">Critical Findings</div>
+    </div>
+    <div class="stat-card danger">
+        <div class="stat-number">{{ stats.exploitable }}</div>
+        <div class="stat-label">Exploitable</div>
+    </div>
+    <div class="stat-card warning">
+        <div class="stat-number">{{ stats.sla_breached }}</div>
+        <div class="stat-label">SLA Breaches</div>
+    </div>
     <div class="stat-card">
         <div class="stat-number">{{ stats.actions }}</div>
         <div class="stat-label">Patch Actions</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">{{ stats.scan_sources }}</div>
+        <div class="stat-label">Scan Sources</div>
     </div>
 </div>
 {% else %}
@@ -53,8 +61,17 @@
 
 <h2>Quick Navigation</h2>
 <div class="link-grid">
-    <a href="{{ url_for('reports_index') }}" class="link-card">Reports</a>
-    <a href="{{ url_for('sql_objects') }}" class="link-card">SQL Objects</a>
-    <a href="{{ url_for('discussion') }}" class="link-card">Discussion</a>
+    <a href="{{ url_for('reports_index') }}" class="link-card">
+        <strong>Reports</strong>
+        <span>Aggregated analytics across all data</span>
+    </a>
+    <a href="{{ url_for('sql_objects') }}" class="link-card">
+        <strong>SQL Objects</strong>
+        <span>Views, functions, procedures &amp; triggers</span>
+    </a>
+    <a href="{{ url_for('discussion') }}" class="link-card">
+        <strong>Discussion</strong>
+        <span>Normalization, integrity &amp; isolation</span>
+    </a>
 </div>
 {% endblock %}

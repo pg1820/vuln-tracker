@@ -3,6 +3,7 @@
 {% block content %}
 <a href="{{ url_for('reports_index') }}" class="btn btn-back">&larr; All Reports</a>
 <h1>{{ title }}</h1>
+{% if description %}<p class="muted" style="margin-bottom:1rem;">{{ description }}</p>{% endif %}
 
 {% if rows %}
 <div class="table-wrapper">
@@ -25,6 +26,7 @@
     </tbody>
 </table>
 </div>
+<p class="record-count">{{ rows|length }} row{{ 's' if rows|length != 1 else '' }}</p>
 {% else %}
 <p class="muted">No data available for this report.</p>
 {% endif %}
