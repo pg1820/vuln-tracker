@@ -397,6 +397,14 @@ TABLES_NAV = [
 ]
 
 
+# Inject tables_nav into every template automatically so the sidebar
+# always renders all 15 table links — no need to remember to pass it
+# in each render_template call.
+@app.context_processor
+def inject_nav():
+    return {"tables_nav": TABLES_NAV}
+
+
 def get_fk_options(table_name):
     """Load FK dropdown options for a table's foreign key columns."""
     cfg = TABLE_CONFIG[table_name]
