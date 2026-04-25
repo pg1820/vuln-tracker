@@ -288,6 +288,7 @@ a:hover { color: var(--cyan-bright); text-shadow: 0 0 12px var(--cyan-glow); }
 }
 .stat-card {
     position: relative;
+    display: block;
     background: var(--bg-glass);
     backdrop-filter: blur(20px) saturate(180%);
     -webkit-backdrop-filter: blur(20px) saturate(180%);
@@ -298,7 +299,11 @@ a:hover { color: var(--cyan-bright); text-shadow: 0 0 12px var(--cyan-glow); }
     box-shadow: var(--shadow-md), var(--shadow-inset);
     overflow: hidden;
     transition: transform 0.25s cubic-bezier(0.4,0,0.2,1), border-color 0.25s, box-shadow 0.25s;
+    text-decoration: none;
+    color: inherit;
+    cursor: pointer;
 }
+.stat-card:hover { text-decoration: none; }
 .stat-card::before {
     content: "";
     position: absolute;

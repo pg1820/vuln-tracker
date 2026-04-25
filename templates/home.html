@@ -6,54 +6,54 @@
 
 {% if stats %}
 <div class="stats-grid">
-    <div class="stat-card">
+    <a href="{{ url_for('table_list', table_name='organizations') }}" class="stat-card">
         <div class="stat-number">{{ stats.orgs }}</div>
         <div class="stat-label">Organizations</div>
-    </div>
-    <div class="stat-card">
+    </a>
+    <a href="{{ url_for('table_list', table_name='users') }}" class="stat-card">
         <div class="stat-number">{{ stats.users }}</div>
         <div class="stat-label">Users</div>
-    </div>
-    <div class="stat-card">
+    </a>
+    <a href="{{ url_for('table_list', table_name='assets') }}" class="stat-card">
         <div class="stat-number">{{ stats.assets }}</div>
         <div class="stat-label">Assets Tracked</div>
-    </div>
-    <div class="stat-card">
+    </a>
+    <a href="{{ url_for('table_list', table_name='asset_groups') }}" class="stat-card">
         <div class="stat-number">{{ stats.asset_groups }}</div>
         <div class="stat-label">Asset Groups</div>
-    </div>
-    <div class="stat-card">
+    </a>
+    <a href="{{ url_for('table_list', table_name='software_products') }}" class="stat-card">
         <div class="stat-number">{{ stats.software }}</div>
         <div class="stat-label">Software Products</div>
-    </div>
-    <div class="stat-card">
+    </a>
+    <a href="{{ url_for('table_list', table_name='vulnerabilities') }}" class="stat-card">
         <div class="stat-number">{{ stats.vulns }}</div>
         <div class="stat-label">Known CVEs</div>
-    </div>
-    <div class="stat-card accent">
+    </a>
+    <a href="{{ url_for('table_list', table_name='scan_findings') }}" class="stat-card accent">
         <div class="stat-number">{{ stats.findings }}</div>
         <div class="stat-label">Open Findings</div>
-    </div>
-    <div class="stat-card danger">
+    </a>
+    <a href="{{ url_for('report_findings_severity') }}" class="stat-card danger">
         <div class="stat-number">{{ stats.critical_findings }}</div>
         <div class="stat-label">Critical Findings</div>
-    </div>
-    <div class="stat-card danger">
+    </a>
+    <a href="{{ url_for('report_exploit_risk') }}" class="stat-card danger">
         <div class="stat-number">{{ stats.exploitable }}</div>
         <div class="stat-label">Exploitable</div>
-    </div>
-    <div class="stat-card warning">
+    </a>
+    <a href="{{ url_for('report_sla_breach') }}" class="stat-card warning">
         <div class="stat-number">{{ stats.sla_breached }}</div>
         <div class="stat-label">SLA Breaches</div>
-    </div>
-    <div class="stat-card">
+    </a>
+    <a href="{{ url_for('table_list', table_name='patch_actions') }}" class="stat-card">
         <div class="stat-number">{{ stats.actions }}</div>
         <div class="stat-label">Patch Actions</div>
-    </div>
-    <div class="stat-card">
+    </a>
+    <a href="{{ url_for('table_list', table_name='scan_sources') }}" class="stat-card">
         <div class="stat-number">{{ stats.scan_sources }}</div>
         <div class="stat-label">Scan Sources</div>
-    </div>
+    </a>
 </div>
 {% else %}
 <p class="muted">Database not connected or not initialized. Set DATABASE_URL and run schema.sql.</p>
