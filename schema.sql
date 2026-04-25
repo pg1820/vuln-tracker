@@ -1040,7 +1040,7 @@ INSERT INTO software_vulnerabilities (software_id_fk, vuln_id_fk, affected_versi
 (2,  11, '3.0.0 - 3.0.6',    '3.0.7',   'https://www.openssl.org/news/secadv/20221101.txt'),
 (11, 8,  '< 9.3p2',          '9.3p2',   'https://www.openssh.com/security.html'),
 (1,  7,  '2.4.0 - 2.4.55',   '2.4.56',  'https://httpd.apache.org/security/vulnerabilities_24.html'),
-(2,  2,  '3.0.0 - 3.0.6',    '3.0.7',   'https://www.openssl.org/news/secadv/20220315.txt'),
+(7,  4,  '< 1.22.1',         '1.22.1',  'https://nginx.org/en/security_advisories.html'),
 (12, 13, NULL,                NULL,      'https://msrc.microsoft.com/update-guide/'),
 (12, 12, NULL,                NULL,      'https://msrc.microsoft.com/update-guide/'),
 (6,  13, NULL,                NULL,      'https://msrc.microsoft.com/update-guide/'),
