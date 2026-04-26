@@ -2,7 +2,7 @@
 
 A full-stack PostgreSQL application that models the complete enterprise cybersecurity vulnerability lifecycle — from scanner discovery, through risk scoring and SLA enforcement, to patch tracking with a full audit trail.
 
-**Final project for NYU Tandon — Principles of Database Systems — Spring 2026**
+**Final project for NYU Tandon — CS-GY 6083 Principles of Database Systems — Prof. Aspen Olmsted — Spring 2026**
 
 **Live application:** https://vuln-tracker.onrender.com
 **GitHub repository:** https://github.com/pg1820/vuln-tracker
@@ -215,4 +215,4 @@ vuln_tracker/
 
 ## Author
 
-**Pavlos Giannakis** · NYU Tandon School of Engineering · Principles of Database Systems · Spring 2026
+**Pavlos Giannakis** · NYU Tandon School of Engineering · CS-GY 6083 Principles of Database Systems · Prof. Aspen Olmsted · Spring 2026
