@@ -1,6 +1,6 @@
 # Vulnerability and Patch Tracking System
 
-A full-stack PostgreSQL application that models the complete enterprise cybersecurity vulnerability lifecycle — from scanner discovery, through risk scoring and SLA enforcement, to patch tracking with a full audit trail.
+A PostgreSQL application that tracks vulnerabilities and patch actions across an organization's assets — from scanner discovery, through risk scoring, to remediation with an audit trail.
 
 **Final project for NYU Tandon — CS-GY 6083 Principles of Database Systems — Prof. Aspen Olmsted — Spring 2026**
 
@@ -84,7 +84,7 @@ Rather than writing 15 sets of CRUD routes, the application uses **4 generic rou
 - How to resolve foreign keys to human-readable dropdowns
 - What CHECK constraint values to offer in select boxes
 
-Adding a new table to the application requires zero new Python code — just a new dictionary entry. The application is intentionally thin; the database does the heavy lifting.
+Adding a new table to the application requires only a new dictionary entry, no new Python. CRUD operations rely on the schema's foreign key constraints rather than application-side validation.
 
 ---
 
@@ -134,7 +134,7 @@ gunicorn app:app
 
 ## Risk Score Formula
 
-The function `fn_finding_risk_score` is the brain of the prioritization system. Marked `IMMUTABLE` so PostgreSQL can cache results and use it in index expressions.
+The function `fn_finding_risk_score` produces the per-finding risk score. It is declared `IMMUTABLE` so PostgreSQL can cache the result and use it in index expressions.
 
 ```
 risk = CVSS × (0.4 + criticality × 0.32) × (1 + EPSS × 1.5) × exploit_bonus
@@ -177,7 +177,7 @@ The database enforces all four standard integrity types:
 - **Domain Integrity** — 15+ CHECK constraints, native types (INET, MACADDR, NUMERIC), explicit value enumerations on `severity`, `status`, `role`.
 - **User-Defined Integrity** — 12 UNIQUE constraints prevent duplicate CVE IDs, duplicate hostnames, duplicate junction-table mappings.
 
-Plus NOT NULL on every business-critical column. The database refuses to enter an inconsistent state — application bugs cannot corrupt the schema.
+Plus NOT NULL on every column where a missing value would corrupt downstream queries. Application code cannot bypass these constraints.
 
 ---
 
@@ -207,12 +207,5 @@ vuln_tracker/
 ├── Procfile            Render/Gunicorn process declaration
 ├── render.yaml         Render service configuration
 ├── templates/          7 Jinja templates — base, home, table list/form, report, sql_objects, discussion
-├── static/styles.css   Dark-themed CSS with mid-navy palette and gold/cyan accents
-└── README.md           This file
-```
-
----
-
-## Author
-
-**Pavlos Giannakis** · NYU Tandon School of Engineering · CS-GY 6083 Principles of Database Systems · Prof. Aspen Olmsted · Spring 2026
+├── static/styles.css   Application stylesheet
+└── README.md    
