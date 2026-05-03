@@ -19,7 +19,7 @@ A PostgreSQL application that tracks vulnerabilities and patch actions across an
 | Procedures | 3 | Idempotent scan ingestion, transactional patch action, daily risk snapshot |
 | Triggers | 4 | Audit log, pre-insert risk computation, time-to-remediate, timestamp keeper |
 | Aggregation Reports | 8 | GROUP BY, HAVING, CASE, COUNT(DISTINCT), date arithmetic, window functions |
-| Foreign Keys | 18 | ON DELETE CASCADE for operational data, SET NULL for optional ownership |
+| Foreign Keys | 24 | ON DELETE CASCADE for operational data, SET NULL for optional ownership |
 | CHECK Constraints | 15+ | severity, criticality 1-5, employee_count > 0, etc. |
 | UNIQUE Constraints | 12 | CVE IDs, hostnames, junction-table FK pairs |
 | Junction Tables | 3 | Asset–group, asset–software, software–vulnerability |
@@ -173,7 +173,7 @@ The schema is in **Third Normal Form** with one intentional, documented denormal
 The database enforces all four standard integrity types:
 
 - **Entity Integrity** — 15 SERIAL PRIMARY KEYs (auto-increment, NOT NULL, UNIQUE).
-- **Referential Integrity** — 18 FOREIGN KEYs with `ON DELETE CASCADE` on operational data and `ON DELETE SET NULL` on optional ownership.
+- **Referential Integrity** — 24 FOREIGN KEYs with `ON DELETE CASCADE` on operational data and `ON DELETE SET NULL` on optional ownership.
 - **Domain Integrity** — 15+ CHECK constraints, native types (INET, MACADDR, NUMERIC), explicit value enumerations on `severity`, `status`, `role`.
 - **User-Defined Integrity** — 12 UNIQUE constraints prevent duplicate CVE IDs, duplicate hostnames, duplicate junction-table mappings.
 
