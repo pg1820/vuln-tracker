@@ -19,11 +19,13 @@
     </thead>
     <tbody>
         {% for row in rows %}
-        <tr>
+        <tr class="clickable-row"
+            data-href="{{ url_for('table_edit', table_name=table_name, pk_val=row[cfg.pk]) }}"
+            style="cursor: pointer;">
             {% for col in cfg.columns %}
             <td>{{ row[col] if row[col] is not none else '–' }}</td>
             {% endfor %}
-            <td class="actions-cell">
+            <td class="actions-cell" onclick="event.stopPropagation();">
                 <a href="{{ url_for('table_edit', table_name=table_name, pk_val=row[cfg.pk]) }}" class="btn btn-small">Edit</a>
                 <form method="POST" action="{{ url_for('table_delete', table_name=table_name, pk_val=row[cfg.pk]) }}" class="inline-form"
                       onsubmit="return confirm('Delete this record?');">
@@ -33,6 +35,13 @@
         </tr>
         {% endfor %}
     </tbody>
+    <script>
+      document.querySelectorAll('tr.clickable-row').forEach(function(r) {
+        r.addEventListener('click', function() {
+          window.location = r.dataset.href;
+        });
+      });
+    </script>
 </table>
 </div>
 {% else %}
