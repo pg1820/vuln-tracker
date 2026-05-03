@@ -304,7 +304,18 @@ TABLE_CONFIG = {
         "order": "finding_id",
         "fk_lookups": {
             "asset_id_fk": ("assets", "asset_id", "hostname"),
-            "sw_vuln_id_fk": ("software_vulnerabilities", "sw_vuln_id", "sw_vuln_id"),
+            "sw_vuln_id_fk": {
+                "sql": """
+                    SELECT sv.sw_vuln_id,
+                           sp.product_name || ' — ' || v.cve_id AS label
+                    FROM software_vulnerabilities sv
+                    JOIN software_products sp ON sv.software_id_fk = sp.software_id
+                    JOIN vulnerabilities v ON sv.vuln_id_fk = v.vuln_id
+                    ORDER BY sv.sw_vuln_id
+                """,
+                "id_col": "sw_vuln_id",
+                "label_col": "label",
+            },
             "scan_source_id_fk": ("scan_sources", "source_id", "source_name"),
         },
         "field_options": {
@@ -406,13 +417,23 @@ def inject_nav():
 
 
 def get_fk_options(table_name):
-    """Load FK dropdown options for a table's foreign key columns."""
+    """Load FK dropdown options for a table's foreign key columns.
+
+    Supports two lookup forms:
+      - 3-tuple (ref_table, ref_pk, ref_display) — simple lookup
+      - dict {"sql": "...", "id_col": "...", "label_col": "..."} — custom JOIN query
+    """
     cfg = TABLE_CONFIG[table_name]
     fk_opts = {}
     lookups = cfg.get("fk_lookups", {})
-    for fk_col, (ref_table, ref_pk, ref_display) in lookups.items():
-        rows = query(f"SELECT {ref_pk}, {ref_display} FROM {ref_table} ORDER BY {ref_pk}")
-        fk_opts[fk_col] = [(r[ref_pk], r[ref_display]) for r in rows]
+    for fk_col, spec in lookups.items():
+        if isinstance(spec, tuple):
+            ref_table, ref_pk, ref_display = spec
+            rows = query(f"SELECT {ref_pk}, {ref_display} FROM {ref_table} ORDER BY {ref_pk}")
+            fk_opts[fk_col] = [(r[ref_pk], r[ref_display]) for r in rows]
+        elif isinstance(spec, dict):
+            rows = query(spec["sql"])
+            fk_opts[fk_col] = [(r[spec["id_col"]], r[spec["label_col"]]) for r in rows]
     return fk_opts
 
 
