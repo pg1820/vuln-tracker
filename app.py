@@ -718,7 +718,7 @@ def report_exploit_risk():
 @app.route("/reports/org-risk-posture")
 def report_org_risk():
     """Uses vw_organization_risk_posture view."""
-    rows = query("SELECT * FROM vw_organization_risk_posture ORDER BY total_risk_score DESC")
+    rows = query("SELECT * FROM vw_organization_risk_posture ORDER BY aggregate_risk_score DESC")
     if not rows:
         headers = ["No data"]
         data = []
