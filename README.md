@@ -37,7 +37,7 @@ A full-stack PostgreSQL application that models the complete enterprise cybersec
 | Function DDL (/6) | `schema.sql` — `fn_finding_risk_score` (IMMUTABLE), `fn_sla_days_remaining`, `fn_org_compliance_rate`, `fn_asset_composite_risk` |
 | Procedure DDL (/6) | `schema.sql` — `sp_record_scan_finding`, `sp_initiate_patch_action`, `sp_refresh_risk_snapshot` |
 | Trigger DDL (/6) | `schema.sql` — `trg_patch_status_audit`, `trg_finding_pre_insert`, `trg_finding_remediated`, `trg_org_updated_at` |
-| ER Diagram (/6) | `ER_Diagram.png` — 5-tier dark-theme PIL render |
+| ER Diagram (/6) | [`ER_Diagram.png`](./ER_Diagram.png) — single-page academic ERD; 15 tables grouped into 5 tier-coloured sections; 24 FK relationships drawn with crow's-foot notation (mandatory FK = solid blue, optional FK = dashed grey); PK/FK/NN/UQ badges per column |
 | Discussion: Normalization (/3) | Presentation slide 9; this README — Schema Design section below |
 | Discussion: Integrity (/3) | Presentation slide 10; this README — Integrity Constraints section below |
 | Discussion: Isolation (/3) | Presentation slide 19; this README — Concurrency section below |
