@@ -708,7 +708,7 @@ def report_exploit_risk():
         headers = list(rows[0].keys())
         data = [tuple(r[h] for h in headers) for r in rows]
     return render_template("report.html",
-                           title="Exploit Risk Dashboard (Top 20)",
+                           title="Exploit Risk Dashboard",
                            description="View: vw_exploit_risk_dashboard — shows only active findings (excluding Remediated, Accepted Risk, and False Positive) that are Critical or High severity, or have a known public exploit. Sorted by exploit probability.",
                            headers=headers,
                            rows=data,
