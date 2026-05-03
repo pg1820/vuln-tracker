@@ -709,7 +709,7 @@ def report_exploit_risk():
         data = [tuple(r[h] for h in headers) for r in rows]
     return render_template("report.html",
                            title="Exploit Risk Dashboard (Top 20)",
-                           description="View: vw_exploit_risk_dashboard — active findings with EPSS score, CVSS score, SLA status, and risk score. Sorted by exploit probability.",
+                           description="View: vw_exploit_risk_dashboard — shows only active findings (excluding Remediated, Accepted Risk, and False Positive) that are Critical or High severity, or have a known public exploit. Sorted by exploit probability.",
                            headers=headers,
                            rows=data,
                            tables_nav=TABLES_NAV)
